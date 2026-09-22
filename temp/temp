@@ -1,0 +1,39 @@
+ding/devGeekz/credscore/backend$ curl -X POST http://localhost:8000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"tenant_name":"Accra Microfinance","org_type":"mfi","contact_email":"ops@accramfi.com","admin_name":"Ama Owusu","admin_email":"ama@accramfi.com","password":"supersecret123"}'
+
+  iamdemain@iamdemain:/mnt/d/coding/devGeekz/credscore/backend$ curl -X POST http://localhost:8000/api/v1/merchants   -H "Authorization: Bearer <token>" -H "Content-Type: application/json"   -d '{"full_name":"Kwame Mensah","phone":"+233201234567","business_name":"Kwame Provisions Shop","telco":"MTN"}'
+iamdemain@iamdemain:/mnt/d/coding/devGeekz/credscore/backend$ # grab a token from /login first, then:nd$ # grab a token from /login first, then:
+curl -X POST http://localhost:8000/api/v1/merchants \
+  -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
+  -d '{"full_name":"Kwame Mensah","phone":"+233201234567","business_name":"Kwame Provisions Shop","telco":"MTN"}'
+
+
+
+   curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"ama@accramfi.com","password":"supersecret123"}'
+{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjVjMTBlMC0yZTcwLTQwZjktODk1Zi0zYzQ2MTFjY2EzZWUiLCJ0ZW5hbnRfaWQiOiI3MzA3OTk4NC05NGYwLTQ0NjAtODZkNC1kNTM4MDhiMDA2YTYiLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3OTA1NTQ1NDl9.b76qeryS9OKeYGRVrZAWA1CwFFwHe1hWojmJwQDD74M","token_type":"bearer","user":{"id":"8b5c10e0-2e70-40f9-895f-3c4611cca3ee","tenant_id":"73079984-94f0-4460-86d4-d53808b006a6","email":"ama@accramfi.com","name":"Ama Owusu","role":"admin","is_active":true,"created_at":"2026-09-18T23:03:17.947173"}}iamdemain@iamdemain:/mnt/d/coding/devGeekz/credscore/backend$ 
+
+
+TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"ama@accramfi.com","password":"supersecret123"}' | jq -r '.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjVjMTBlMC0yZTcwLTQwZjktODk1Zi0zYzQ2MTFjY2EzZWUiLCJ0ZW5hbnRfaWQiOiI3MzA3OTk4NC05NGYwLTQ0NjAtODZkNC1kNTM4MDhiMDA2YTYiLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3OTA1NTQ1NDl9.b76qeryS9OKeYGRVrZAWA1CwFFwHe1hWojmJwQDD74M')
+
+
+  curl -X POST http://localhost:8000/api/v1/statements/upload \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "merchant_id=$MERCHANT_ID" \
+  -F "file=@/mnt/d/coding/devGeekz/credscore/backend/requirements.txt;type=application/pdf"
+
+
+  curl -X POST http://localhost:8000/api/v1/statements/upload \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "merchant_id=a2642c2e-4b96-4224-a942-89751a2050f6" \
+  -F "file=@/mnt/d/coding/devGeekz/credscore/backend/requirements.txt;type=application/pdf"
+
+echo $TOKEN   # confirm it printed a real JWT, not empty
+
+
+
+docker run -d --name credscore-minio -p 9000:9000 -p 9001:9001 -e "MINIO_ROOT_USER=minioadmin" -e "MINIO_ROOT_PASSWORD=minioadmin" minio/minio server /data --console-address ":9001"

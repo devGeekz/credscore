@@ -6,8 +6,9 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.config import settings
 from app.middleware.rate_limiter import limiter
-from app.routers import auth
+from app.routers import auth, merchants, statements
 from app.utils.errors import register_exception_handlers
+from app.routers import auth, merchants, statements, whatsapp_webhook
 
 app = FastAPI(title="CredScore API", version="0.1.0")
 
@@ -20,6 +21,9 @@ app.add_middleware(SlowAPIMiddleware)
 register_exception_handlers(app)
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(merchants.router, prefix="/api/v1/merchants", tags=["merchants"])
+app.include_router(statements.router, prefix="/api/v1/statements", tags=["statements"])
+app.include_router(whatsapp_webhook.router, prefix="/api/v1/webhooks/whatsapp", tags=["whatsapp"])
 
 app.add_middleware(
     CORSMiddleware,
