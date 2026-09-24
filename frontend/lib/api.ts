@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getToken, clearToken } from "./cookies";
+import { redirect } from "next/navigation";
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -21,8 +22,8 @@ api.interceptors.response.use(
   (error) => {
     if (typeof window !== "undefined" && error.response?.status === 401) {
       clearToken();
-      window.location.href = "/login";
+      redirect("/login");
     }
     return Promise.reject(error);
-  }
+  },
 );

@@ -10,13 +10,19 @@ from app.utils.security import create_access_token, hash_password, verify_passwo
 
 router = APIRouter()
 
+db_dependency = Depends(get_db)
+current_user_dependency = Depends(get_current_user)
 
 
-@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-def register(payload: RegisterRequest, db: Session = Depends(get_db)):
+@router.post(
+    "/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
+)
+def register(payload: RegisterRequest, db: Session = db_dependency):
     existing = db.query(User).filter(User.email == payload.admin_email).first()
     if existing:
-        raise HTTPException(status_code=400, detail="A user with this email already exists")
+        raise HTTPException(
+            status_code=400, detail="A user with this email already exists"
+        )
 
     tenant = Tenant(
         name=payload.tenant_name,
@@ -39,7 +45,9 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
-    token = create_access_token({"sub": str(user.id), "tenant_id": str(tenant.id), "role": user.role})
+    token = create_access_token(
+        {"sub": str(user.id), "tenant_id": str(tenant.id), "role": user.role}
+    )
     return TokenResponse(access_token=token, user=UserOut.model_validate(user))
 
 
@@ -57,17 +65,20 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("10/minute")
-def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)):
+def login(request: Request, payload: LoginRequest, db: Session = db_dependency):
+    print(f"Login attempt from {request.client.host} for email: {payload.email}")
     user = db.query(User).filter(User.email == payload.email).first()
     if user is None or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Account is deactivated")
 
-    token = create_access_token({"sub": str(user.id), "tenant_id": str(user.tenant_id), "role": user.role})
+    token = create_access_token(
+        {"sub": str(user.id), "tenant_id": str(user.tenant_id), "role": user.role}
+    )
     return TokenResponse(access_token=token, user=UserOut.model_validate(user))
 
-    
+
 @router.get("/me", response_model=UserOut)
 def me(current_user: User = Depends(get_current_user)):
     return current_user

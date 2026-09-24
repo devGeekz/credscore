@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { api } from "./api";
 import { setToken, clearToken } from "./cookies";
 import type {
@@ -24,7 +25,7 @@ export async function register(payload: RegisterPayload): Promise<User> {
 
 export function logout(): void {
   clearToken();
-  window.location.href = "/login";
+  redirect("/login");
 }
 
 export async function fetchCurrentUser(): Promise<User> {
