@@ -7,7 +7,7 @@ logger = logging.getLogger("credscore")
 
 
 class AppError(Exception):
-    """Base class for all domain errors. Raise a subclass, not this directly."""
+    """base class for all domain errors. raise a subclass, not this directly."""
 
     def __init__(self, message: str, status_code: int = 400, code: str = "error"):
         self.message = message
@@ -37,7 +37,7 @@ class UnauthorizedError(AppError):
 
 
 def register_exception_handlers(app: FastAPI) -> None:
-    """Call this once from main.py: `register_exception_handlers(app)`."""
+    """call this once from main.py: `register_exception_handlers(app)`."""
 
     @app.exception_handler(AppError)
     async def handle_app_error(request: Request, exc: AppError):

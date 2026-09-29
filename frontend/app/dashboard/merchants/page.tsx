@@ -16,7 +16,7 @@ export default function MerchantsPage() {
   const { merchants, isLoading } = useMerchants();
   const { data: statements } = useSWR("/api/v1/statements", () => listStatements());
 
-  // Statements arrive newest-first, so the first hit per merchant is its latest.
+  // statements arrive newest-first, so the first hit per merchant is its latest.
   const latestByMerchant = new Map<string, Statement>();
   statements?.forEach((statement) => {
     if (!latestByMerchant.has(statement.merchant_id)) {

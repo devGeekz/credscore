@@ -8,7 +8,7 @@ from app.database import Base
 
 
 class Tenant(Base):
-    """A lending institution: MFI, bank, or fintech lender."""
+    """a lending institution: mfi, bank, or fintech lender."""
     __tablename__ = "tenants"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -29,7 +29,7 @@ class Tenant(Base):
 
 
 class User(Base):
-    """A lender-side staff account: admin, underwriter, viewer."""
+    """a lender-side staff account: admin, underwriter, viewer."""
     __tablename__ = "users"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -46,7 +46,7 @@ class User(Base):
 
 
 class Merchant(Base):
-    """A micro-merchant/loan applicant being scored by a specific tenant."""
+    """a micro-merchant/loan applicant being scored by a specific tenant."""
     __tablename__ = "merchants"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -64,7 +64,7 @@ class Merchant(Base):
 
 
 class Statement(Base):
-    """A raw MoMo statement file submitted for a merchant."""
+    """a raw momo statement file submitted for a merchant."""
     __tablename__ = "statements"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -82,7 +82,7 @@ class Statement(Base):
 
 
 class ScoreReport(Base):
-    """The generated credit-intelligence output for a statement."""
+    """the generated credit-intelligence output for a statement."""
     __tablename__ = "score_reports"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -101,7 +101,7 @@ class ScoreReport(Base):
 
 
 class WebhookLog(Base):
-    """Outbound delivery log of score reports pushed to lender systems."""
+    """outbound delivery log of score reports pushed to lender systems."""
     __tablename__ = "webhook_logs"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -117,7 +117,7 @@ class WebhookLog(Base):
 
 
 class AuditLog(Base):
-    """Immutable action log for compliance (DPC / BoG audit trail)."""
+    """immutable action log for compliance (dpc / bog audit trail)."""
     __tablename__ = "audit_logs"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)

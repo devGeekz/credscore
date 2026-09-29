@@ -88,8 +88,8 @@ def create_api_key(
     current_user: User = Depends(get_current_user),
     db: Session = db_dependency,
 ):
-    """One key per tenant (matches the single tenants.api_key_hash column).
-    The plaintext key is returned once; only a prefix + SHA-256 is stored."""
+    """one key per tenant (matches the single tenants.api_key_hash column).
+    the plaintext key is returned once; only a prefix + sha-256 is stored."""
     key = API_KEY_PREFIX + secrets.token_urlsafe(24)
     tenant = db.get(Tenant, current_user.tenant_id)
     tenant.api_key_hash = f"{key[:15]}:{hashlib.sha256(key.encode()).hexdigest()}"

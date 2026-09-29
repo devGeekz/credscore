@@ -49,7 +49,7 @@ class DashboardStats(BaseModel):
 
 
 class ApiKeyOut(BaseModel):
-    """The plain key is only ever returned at creation time."""
+    """the plain key is only ever returned at creation time."""
     masked: Optional[str]
     active: bool
 

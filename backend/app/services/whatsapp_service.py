@@ -16,7 +16,7 @@ GRAPH_API_BASE = f"https://graph.facebook.com/{GRAPH_API_VERSION}"
 
 @dataclass
 class InboundMessage:
-    wamid: str  # WhatsApp message id — the idempotency key for webhook retries
+    wamid: str  # whatsapp message id — the idempotency key for webhook retries
     from_phone: str
     msg_type: str  # "text" | "document" | "image" | ...
     text: Optional[str] = None
@@ -42,7 +42,7 @@ def send_text_message(to_phone: str, body: str) -> None:
 
 
 def download_media(media_id: str) -> tuple[bytes, str]:
-    """Two-step per Meta's API: resolve the media id to a temp URL, then fetch it."""
+    """two-step per meta's api: resolve the media id to a temp url, then fetch it."""
     meta_url = f"{GRAPH_API_BASE}/{media_id}"
     meta_response = httpx.get(meta_url, headers=_headers(), timeout=10)
     meta_response.raise_for_status()

@@ -16,7 +16,7 @@ export default function SettingsPage() {
     "/api/v1/settings/webhooks",
     fetchWebhookDeliveries,
   );
-  // null until the user types — derived value follows SWR data otherwise
+  // null until the user types — derived value follows swr data otherwise
   const [urlOverride, setUrlOverride] = useState<string | null>(null);
   const url = urlOverride ?? settings?.webhook_url ?? "";
   const [busy, setBusy] = useState(false);

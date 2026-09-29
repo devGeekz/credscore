@@ -1,7 +1,7 @@
-"""Scoring model: the five underwriting metrics (concept §6) plus a risk tag
+"""scoring model: the five underwriting metrics plus a risk tag
 and a suggested credit limit.
 
-Every threshold lives in THRESHOLDS — tune there, never inline."""
+every threshold lives in THRESHOLDS — tune there, never inline."""
 
 import pandas as pd
 
@@ -37,7 +37,7 @@ def score(flows: pd.DataFrame) -> dict:
     active_days = int(business["ts"].dt.date.nunique())
 
     risk_tag = _risk_tag(consistency, concentration, expense_ratio, inflow_total)
-    # One day of activity is a lump sum, not a revenue stream — no limit.
+    # one day of activity is a lump sum, not a revenue stream — no limit.
     suggested_limit = (
         round(max(monthly_net, 0) * THRESHOLDS["limit_ratio"], 2)
         if active_days >= THRESHOLDS["min_consistency_days"]
@@ -73,7 +73,7 @@ def score(flows: pd.DataFrame) -> dict:
                     business.groupby("counterparty")["amount"].sum().nlargest(5).items()
                 )
             ],
-            # chart data for the Phase 4 report view
+            # chart data for the report view
             "daily_revenue": [
                 [day.isoformat(), round(float(amount), 2)]
                 for day, amount in business.groupby(business["ts"].dt.date)["amount"].sum().items()
@@ -102,7 +102,7 @@ def _concentration(business: pd.DataFrame, inflow_total: float) -> float:
 
 
 def _average_daily_balance(flows: pd.DataFrame) -> float | None:
-    """Lowest 30-day rolling end-of-day balance (concept: liquidity cushion)."""
+    """lowest 30-day rolling end-of-day balance (liquidity cushion)."""
     with_balance = flows.dropna(subset=["balance"])
     if with_balance.empty:
         return None  # statement had no balance column

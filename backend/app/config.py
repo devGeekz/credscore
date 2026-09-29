@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     database_url: str
     redis_url: str = "redis://localhost:6379"
-    # ponytail: set to memory:// in dev when Redis isn't running; empty = use redis_url
+    # set to memory:// in dev when redis isn't running; empty = use redis_url
     rate_limit_storage_uri: str = ""
     jwt_secret: str
     jwt_expires_in: str = "7d"
@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     app_url: str = "http://localhost:8000"
     webhook_signing_secret: str = "dev-secret"
 
-    # Absolute so it loads regardless of the caller's cwd (pytest, workers)
+    # absolute so it loads regardless of the caller's cwd (tests, workers)
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parents[1] / ".env",
         env_file_encoding="utf-8",

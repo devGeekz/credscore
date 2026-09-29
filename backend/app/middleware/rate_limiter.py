@@ -8,8 +8,8 @@ from app.utils.security import decode_access_token
 
 
 def _rate_limit_key(request: Request) -> str:
-    """Per-tenant limiting once authenticated (decoded from the JWT, no DB
-    hit needed); falls back to IP for unauthenticated routes like /login."""
+    """per-tenant limiting once authenticated (decoded from the jwt, no db
+    hit needed); falls back to ip for unauthenticated routes like /login."""
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
         token = auth_header[len("Bearer "):]

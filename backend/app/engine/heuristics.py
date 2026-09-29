@@ -1,9 +1,9 @@
-"""Velocity & frequency heuristics (concept §6): separating genuine business
+"""velocity & frequency heuristics: separating genuine business
 revenue from personal transfers, internal sweeps, and cash-outs.
 
-ponytail: keyword lists + two numeric rules are the whole model. They are
-tuning knobs, not ML — expect to iterate them against real statements, not
-to replace them with a trained classifier until there's labelled data.
+keyword lists + two numeric rules are the whole model. they are
+tuning knobs, not ml — iterate them against real statements rather than
+replacing them with a trained classifier until there's labelled data.
 """
 
 import re
@@ -29,7 +29,7 @@ SUPPLIER_MIN_OUTFLOWS = 3   # this many outbound payments = recurring supplier
 
 
 def classify_flows(df: pd.DataFrame) -> pd.DataFrame:
-    """Adds a `flow_class` column: business | personal | internal |
+    """adds a `flow_class` column: business | personal | internal |
     supplier | cash_out | other."""
     df = df.copy()
     text = (
@@ -43,8 +43,8 @@ def classify_flows(df: pd.DataFrame) -> pd.DataFrame:
     internal = is_in & ~personal & _matches(text, INTERNAL_KEYWORDS)
     cash_out = is_out & _matches(text, CASH_OUT_KEYWORDS)
 
-    # Salary/remittance pattern: a counterparty we rarely see paying an
-    # outlier amount (concepts §6.2, personal signal).
+    # salary/remittance pattern: a rarely-seen counterparty paying an
+    # outlier amount (personal signal).
     rare_outlier = pd.Series(False, index=df.index)
     candidate = df[is_in & ~personal & ~internal]
     if len(candidate):
@@ -56,7 +56,7 @@ def classify_flows(df: pd.DataFrame) -> pd.DataFrame:
                 & (candidate["amount"] >= OUTLIER_MULTIPLE * median)
             )
 
-    # Recurring outbound counterparty = supplier/COGS, not one-off spending.
+    # recurring outbound counterparty = supplier/cogs, not one-off spending.
     supplier = pd.Series(False, index=df.index)
     outflows = df[is_out & ~cash_out]
     if len(outflows):

@@ -1,5 +1,5 @@
-"""Raw statement bytes -> a raw DataFrame, columns exactly as the file used
-them. Canonical shaping happens in engine.normalize."""
+"""raw statement bytes -> a raw dataframe, columns exactly as the file used
+them. canonical shaping happens in engine.normalize."""
 
 import io
 import re
@@ -9,7 +9,7 @@ import pdfplumber
 
 
 class ExtractError(Exception):
-    """The file could not be read at all."""
+    """the file could not be read at all."""
 
 
 def extract_dataframe(data: bytes, filename: str = "") -> pd.DataFrame:
@@ -35,8 +35,8 @@ def _from_csv(data: bytes) -> pd.DataFrame:
 
 def _from_pdf(data: bytes) -> pd.DataFrame:
     with pdfplumber.open(io.BytesIO(data)) as pdf:
-        # ponytail: first extractable table wins — per-page layout merging is
-        # the upgrade path once real multi-page fixtures land.
+        # the first extractable table wins; merging per-page layouts is the
+        # upgrade path once multi-page inputs exist.
         for page in pdf.pages:
             for table in page.extract_tables() or []:
                 frame = _table_to_frame(table)
@@ -63,12 +63,12 @@ def _from_text(text: str) -> pd.DataFrame:
     if not lines:
         raise ExtractError("No text found in PDF")
 
-    # Comma-separated text (a CSV dropped into a PDF) parses as-is.
+    # comma-separated text (a csv dropped into a pdf) parses as-is.
     if sum("," in line for line in lines) >= max(2, len(lines) // 2):
         return pd.read_csv(io.StringIO("\n".join(lines)))
 
-    # Whitespace-aligned table. A header row is required — a headerless PDF
-    # text dump needs positional mapping (ponytail ceiling, not built).
+    # whitespace-aligned table. a header row is required — headerless text
+    # needs positional mapping (not built).
     if "date" not in lines[0].lower():
         raise ExtractError("PDF text has no header row")
     split = [re.split(r"\s{2,}", line) for line in lines]

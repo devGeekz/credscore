@@ -36,12 +36,12 @@ def test_merchant_not_visible_across_tenants(client):
 
     merchant = _create_merchant(client, tenant_a)
 
-    # A sees it
+    # a sees it
     assert client.get(
         f"/api/v1/merchants/{merchant['id']}", headers=tenant_a
     ).status_code == 200
 
-    # B gets 404, not 403 — no existence leak across tenants
+    # b gets 404, not 403 — no existence leak across tenants
     assert client.get(
         f"/api/v1/merchants/{merchant['id']}", headers=tenant_b
     ).status_code == 404

@@ -1,7 +1,7 @@
-"""Shared Celery broker liveness probe.
+"""shared broker liveness probe.
 
-Celery's publish/result retries block for ~110s when Redis is down — an API
-request must never absorb that, so callers probe before touching Celery.
+publish/result retries block for ~110s when the broker is down — an api
+request must never absorb that, so callers probe before touching the queue.
 """
 
 import socket

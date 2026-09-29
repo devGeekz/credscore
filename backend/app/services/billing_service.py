@@ -1,6 +1,6 @@
-"""Subscription plans + per-statement usage metering (Phase 5).
+"""subscription plans + per-statement usage metering.
 
-No payment provider is in the stack — these are the numbers the settings
+no payment provider is in the stack — these are the numbers the settings
 dashboard displays and what billing will enforce once invoicing exists."""
 
 from datetime import datetime, timezone

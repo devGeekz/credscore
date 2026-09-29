@@ -1,4 +1,4 @@
-"""Organisation settings: profile, plan + usage, and webhook configuration."""
+"""organisation settings: profile, plan + usage, and webhook configuration."""
 
 import ipaddress
 import re
@@ -19,9 +19,9 @@ from app.services.billing_service import usage
 
 router = APIRouter()
 
-# ponytail: blocks the obvious SSRF targets (loopback/link-local/RFC1918,
-# localhost names). A hostname resolving to a private IP still gets through —
-# resolve-and-check + egress rules are the upgrade path when this leaves dev.
+# blocks the obvious ssrf targets (loopback/link-local/rfc1918, localhost
+# names). a hostname resolving to a private ip still gets through —
+# resolve-and-check + egress rules are the upgrade path for production.
 _PRIVATE_HOST_PATTERN = re.compile(
     r"^(localhost|.*\.(local|internal|localhost))$", re.IGNORECASE
 )
@@ -62,7 +62,7 @@ def _validate_webhook_url(raw: str) -> str:
     if parsed.username or parsed.password:
         raise HTTPException(status_code=400, detail="webhook_url must not contain credentials")
     if app_settings.environment == "development":
-        # local receivers are the whole dev workflow; guard below is for prod
+        # local receivers are used in dev; the guard below applies in production
         return url
     if _PRIVATE_HOST_PATTERN.match(parsed.hostname):
         raise HTTPException(status_code=400, detail="webhook_url host not allowed")
@@ -70,7 +70,7 @@ def _validate_webhook_url(raw: str) -> str:
         if ipaddress.ip_address(parsed.hostname).is_private:
             raise HTTPException(status_code=400, detail="webhook_url host not allowed")
     except ValueError:
-        pass  # hostname, not a literal IP
+        pass  # hostname, not a literal ip
     return url
 
 

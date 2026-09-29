@@ -1,10 +1,10 @@
-"""Raw statement rows -> canonical transactions.
+"""raw statement rows -> canonical transactions.
 
-Canonical columns: ts, direction, amount, counterparty, reference, balance.
+canonical columns: ts, direction, amount, counterparty, reference, balance.
 
-Column matching is by hint ranking (exact beats substring), which covers
-MTN MoMo ("Date/Time/Type/Amount/Balance/Counter Party/Reason") and the
-Telecel/AirtelTigo variants without per-telco parsers.
+column matching is by hint ranking (exact beats substring), which covers
+mtn momo ("Date/Time/Type/Amount/Balance/Counter Party/Reason") and the
+telecel/airteltigo variants without per-telco parsers.
 """
 
 import re
@@ -34,7 +34,7 @@ _DEBIT_WORDS = r"\b(?:debit|withdraw\w*|send|sent|out|payment|paid out)\b"
 
 
 class NormalizeError(Exception):
-    """Rows were read but do not look like transactions."""
+    """rows were read but do not look like transactions."""
 
 
 def normalize(raw: pd.DataFrame) -> pd.DataFrame:
@@ -61,7 +61,7 @@ def normalize(raw: pd.DataFrame) -> pd.DataFrame:
     ts = _timestamps(df, date_col, time_col)
     direction = _direction(df, direction_col, amounts, balances)
 
-    # A statement's counterparty is often the only reference it has.
+    # a statement's counterparty is often the only reference it has.
     counterparty = (
         df[counterparty_col].fillna("").astype(str).str.strip()
         if counterparty_col else pd.Series("", index=df.index)
@@ -83,7 +83,7 @@ def normalize(raw: pd.DataFrame) -> pd.DataFrame:
             "balance": balances if balances is not None else float("nan"),
         }
     )
-    # Summary/footer rows have no parsable date or amount — drop them.
+    # summary/footer rows have no parsable date or amount — drop them.
     out = out.dropna(subset=["ts", "amount"])
     out = out[out["amount"] > 0]
     if out.empty:
@@ -134,8 +134,8 @@ def _timestamps(df: pd.DataFrame, date_col: str, time_col: str | None) -> pd.Ser
         combined = combined + " " + time_part
     combined = combined.str.replace(r"\s+", " ", regex=True).str.strip()
 
-    # Ghanaian statements are DD/MM/YYYY; fall back to US ordering if that
-    # fails to parse most rows.
+        # dates are dd/mm/yyyy; fall back to us ordering if that
+        # fails to parse most rows.
     ts = pd.to_datetime(combined, errors="coerce", dayfirst=True, format="mixed")
     if ts.isna().mean() > 0.5:
         ts = pd.to_datetime(combined, errors="coerce", dayfirst=False, format="mixed")
@@ -157,7 +157,7 @@ def _direction(
         direction.loc[values.str.contains(_CREDIT_WORDS, regex=True)] = "in"
         direction.loc[values.str.contains(_DEBIT_WORDS, regex=True)] = "out"
     elif balances is not None and not (amounts < 0).any():
-        # No type column and all-positive amounts: balance going down = outflow.
+        # no type column and all-positive amounts: balance going down = outflow.
         direction.loc[balances.diff() < 0] = "out"
 
     direction.loc[amounts < 0] = "out"  # sign is authoritative

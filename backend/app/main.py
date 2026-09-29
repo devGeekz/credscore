@@ -14,12 +14,12 @@ from app.routers import settings as settings_router
 
 app = FastAPI(title="CredScore API", version="0.1.0")
 
-# Rate limiting
+# rate limiting
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
-# Consistent error JSON shape across the whole API
+# consistent error json shape across the whole api
 register_exception_handlers(app)
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])

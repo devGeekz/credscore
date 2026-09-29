@@ -1,4 +1,4 @@
-"""Statement ingestion pipeline: download -> extract -> normalize ->
+"""statement ingestion pipeline: download -> extract -> normalize ->
 classify -> score -> persist a ScoreReport."""
 
 import logging
@@ -23,8 +23,8 @@ logger = logging.getLogger("credscore")
 def parse_statement_task(self, statement_id: str):
     db = SessionLocal()
     try:
-        # Task args round-trip through JSON, so statement_id always arrives
-        # as a plain string — convert back to UUID before querying.
+        # task args round-trip through json, so statement_id always arrives
+        # as a plain string — convert back to uuid before querying.
         statement = db.query(Statement).filter(Statement.id == UUID(statement_id)).first()
         if statement is None:
             return
@@ -46,17 +46,17 @@ def parse_statement_task(self, statement_id: str):
 
 
 def queue_parse(statement_id) -> None:
-    """Single entry point for both the web and WhatsApp ingestion paths."""
+    """single entry point for both the web and whatsapp ingestion paths."""
     if not broker_reachable():
         if settings.environment == "development":
-            # ponytail: no broker locally — parse inline so E2E is testable
+            # no broker locally — parse inline so the flow is testable
             try:
                 parse_statement_task.apply(args=[str(statement_id)])
             except Exception:
                 logger.exception("Inline parse failed for %s", statement_id)
         else:
-            # ponytail: broker down leaves the row `pending`; re-queue endpoint
-            # lands with Phase 4 status polling.
+            # broker down leaves the row `pending`; the re-queue endpoint
+            # lands with status polling.
             logger.error("Broker unreachable, statement %s left pending", statement_id)
         return
 
@@ -74,7 +74,7 @@ def _score_statement(statement: Statement) -> tuple[dict, tuple]:
 
 
 def _persist(db, statement: Statement, metrics: dict, period_start, period_end) -> ScoreReport:
-    # Upsert: a retried task must not create a second report for one statement.
+    # upsert: a retried task must not create a second report for one statement.
     report = db.query(ScoreReport).filter(ScoreReport.statement_id == statement.id).first()
     if report is None:
         report = ScoreReport(statement_id=statement.id)

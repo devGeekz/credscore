@@ -1,8 +1,8 @@
-"""Outbound score webhooks: log the delivery, POST it to the lender's
-configured endpoint with an HMAC signature, retry 3 times with backoff.
+"""outbound score webhooks: log the delivery, post it to the configured
+endpoint with an hmac signature, retry 3 times with backoff.
 
-The lender verifies authenticity with `tenants.webhook_secret`
-(HMAC-SHA256 over the exact body bytes)."""
+the receiver verifies authenticity with `tenants.webhook_secret`
+(hmac-sha256 over the exact body bytes)."""
 
 import hashlib
 import hmac
@@ -25,7 +25,7 @@ MAX_ATTEMPTS = 3
 
 
 class DeliveryFailed(Exception):
-    """Transport-level failure; carries how many attempts have been made."""
+    """transport-level failure; carries how many attempts have been made."""
 
     def __init__(self, attempts: int, cause: Exception):
         self.attempts = attempts
@@ -38,8 +38,8 @@ def sign_body(body: str, secret: str) -> str:
 
 
 def fire_event(db: Session, tenant_id, event_type: str, payload: dict) -> None:
-    """Creates the delivery log, commits it, then queues the attempt.
-    Committing first matters: the delivery task reads this row."""
+    """creates the delivery log, commits it, then queues the attempt.
+    committing first matters: the delivery task reads this row."""
     log = WebhookLog(
         tenant_id=tenant_id,
         event_type=event_type,
@@ -57,7 +57,7 @@ def queue_delivery(log_id) -> None:
 
     if not broker_reachable():
         if settings.environment == "development":
-            # ponytail: no broker locally — deliver inline so E2E is testable
+            # no broker locally — deliver inline so the flow is testable
             try:
                 deliver_webhook_task.apply(args=[str(log_id)])
             except Exception:
@@ -73,15 +73,15 @@ def queue_delivery(log_id) -> None:
 
 
 def attempt_delivery(log_id) -> None:
-    """One HTTP attempt. Raises DeliveryFailed on transport error so the
+    """one http attempt. raises DeliveryFailed on transport error so the
     task can decide whether to retry; a non-2xx status is not retried —
-    the lender rejected the payload, retrying will not change that."""
+    the receiver rejected the payload, retrying will not change that."""
     from uuid import UUID
 
     from app.database import SessionLocal
     from app.models import Tenant
 
-    # Task args round-trip through JSON, so log_id arrives as a plain string
+    # task args round-trip through json, so log_id arrives as a plain string
     if isinstance(log_id, str):
         log_id = UUID(log_id)
 

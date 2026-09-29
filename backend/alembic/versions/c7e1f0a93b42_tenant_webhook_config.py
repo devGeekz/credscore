@@ -1,4 +1,4 @@
-"""Tenant webhook configuration (Phase 5: outbound score webhooks)."""
+"""tenant webhook configuration."""
 
 import sqlalchemy as sa
 from alembic import op

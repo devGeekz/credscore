@@ -1,5 +1,5 @@
-"""Webhook delivery: HMAC signature (the lender-side verification recipe),
-HTTP attempt against a real local receiver, and the retry policy."""
+"""webhook delivery: hmac signature (the receiver-side verification recipe),
+http attempt against a real local receiver, and the retry policy."""
 
 import hashlib
 import hmac
@@ -81,7 +81,7 @@ def _reload(db, log_id) -> WebhookLog:
 
 
 def test_signature_matches_rfc4231_known_answer():
-    # RFC 4231 test case 1: key = 0x0b * 20, data = "Hi There"
+    # rfc 4231 test case 1: key = 0x0b * 20, data = "Hi There"
     signature = sign_body("Hi There", "\x0b" * 20)
     assert signature == (
         "sha256=b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7"
@@ -97,7 +97,7 @@ def test_attempt_delivery_posts_verifiable_signature(use_test_db, receiver):
     assert log.delivered is True
     assert log.response_status == "200"
 
-    # This is exactly what a lender does on their end.
+    # the receiver verifies the signature the same way.
     body = RECEIVED["body"]
     expected = "sha256=" + hmac.new(b"test-secret", body, hashlib.sha256).hexdigest()
     assert hmac.compare_digest(RECEIVED["headers"]["X-CredScore-Signature"], expected)
@@ -112,10 +112,10 @@ def test_retries_in_production(use_test_db, monkeypatch):
     result = deliver_webhook_task.apply(args=[str(log_id)])
 
     log = _reload(use_test_db, log_id)
-    # eager mode runs retries synchronously: it burned every attempt, not one
+    # eager mode runs retries synchronously: every attempt was made
     assert int(log.attempts) == MAX_ATTEMPTS
     assert log.delivered is False
-    assert result.state == "SUCCESS"  # gave up cleanly, worker not poisoned
+    assert result.state == "SUCCESS"  # gave up cleanly after retries
 
 
 def test_stops_after_first_failure_in_development(use_test_db, monkeypatch):
@@ -136,7 +136,7 @@ def test_gives_up_after_three_attempts(use_test_db):
     log = _reload(use_test_db, log_id)
     assert int(log.attempts) == MAX_ATTEMPTS
     assert log.delivered is False
-    assert result.state == "SUCCESS"  # gave up without erroring the worker
+    assert result.state == "SUCCESS"  # gave up without raising
 
 
 def test_settings_endpoint_validates_webhook_url(client, monkeypatch):
@@ -155,7 +155,7 @@ def test_settings_endpoint_validates_webhook_url(client, monkeypatch):
     ).json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
 
-    # a bad scheme or a credential-bearing URL is refused everywhere
+    # a bad scheme or credential-bearing url is refused everywhere
     for bad_url in ("ftp://example.com/hook", "not-a-url",
                     "https://user:pass@hooks.example.com/hook"):
         response = client.put(
@@ -163,7 +163,7 @@ def test_settings_endpoint_validates_webhook_url(client, monkeypatch):
         )
         assert response.status_code == 400, bad_url
 
-    # private/loopback targets are refused in production (SSRF)
+    # private/loopback targets are refused in production (ssrf)
     monkeypatch.setattr(config_settings, "environment", "production")
     for bad_url in ("http://localhost:9999/hook", "http://10.0.0.5/hook",
                     "http://169.254.169.254/latest/meta-data"):
@@ -172,7 +172,7 @@ def test_settings_endpoint_validates_webhook_url(client, monkeypatch):
         )
         assert response.status_code == 400, bad_url
 
-    # ...but a local receiver is the whole dev workflow
+    # but a local receiver is allowed in development
     monkeypatch.setattr(config_settings, "environment", "development")
     response = client.put(
         "/api/v1/settings",

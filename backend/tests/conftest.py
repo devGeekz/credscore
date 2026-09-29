@@ -11,7 +11,7 @@ from app.main import app
 
 @pytest.fixture()
 def db_session():
-    """In-memory SQLite standing in for Neon — models use portable types."""
+    """in-memory sqlite standing in for neon — models use portable types."""
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},

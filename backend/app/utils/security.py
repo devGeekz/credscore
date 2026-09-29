@@ -21,7 +21,7 @@ def verify_password(plain_password: str, password_hash: str) -> bool:
 
 
 def _parse_expires_in(expires_in: str) -> timedelta:
-    """Turns '7d', '24h', '30m' into a timedelta. Defaults to 7 days on a bad value."""
+    """turns '7d', '24h', '30m' into a timedelta. defaults to 7 days on a bad value."""
     try:
         unit = expires_in[-1]
         amount = int(expires_in[:-1])

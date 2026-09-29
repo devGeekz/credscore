@@ -1,4 +1,4 @@
-"""Celery wrapper for webhook delivery — retry policy lives here, the HTTP
+"""celery wrapper for webhook delivery — retry policy lives here, the http
 attempt lives in services.webhook_service."""
 
 import logging
@@ -25,7 +25,7 @@ def deliver_webhook_task(self, log_id: str):
             )
             return
         if settings.environment == "development":
-            # ponytail: no broker locally — don't sit on a backoff nobody runs
+            # no broker locally — don't wait on a backoff nobody processes
             logger.warning("Webhook %s failed (%s); no broker, not retrying", log_id, exc)
             return
         raise self.retry(exc=exc, countdown=2 ** exc.attempts * 15)
