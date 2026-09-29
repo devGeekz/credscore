@@ -9,7 +9,7 @@ from app.models import Merchant, Statement, User
 from app.schemas.statement import StatementOut
 from app.services.storage_service import upload_statement_file
 from app.utils.errors import AppError, NotFoundError
-from app.workers.parse_tasks import parse_statement_task
+from app.workers.parse_tasks import queue_parse
 
 router = APIRouter()
 
@@ -50,9 +50,7 @@ async def upload_statement(
     db.add(statement)
     db.commit()
     db.refresh(statement)
-    parse_statement_task.delay(str(statement.id))
-
-    # Phase 3 hooks in here: queue a Celery parse_task for this statement.id
+    queue_parse(statement.id)
 
     return statement
 

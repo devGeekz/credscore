@@ -48,3 +48,6 @@ Thumbs.db
 # ---- Misc ----
 *.log
 .cache/
+# Local statement files (storage fallback)
+backend/storage/
+*.pid

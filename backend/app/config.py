@@ -6,6 +6,8 @@ class Settings(BaseSettings):
     environment: str = "development"
     database_url: str
     redis_url: str = "redis://localhost:6379"
+    # ponytail: set to memory:// in dev when Redis isn't running; empty = use redis_url
+    rate_limit_storage_uri: str = ""
     jwt_secret: str
     jwt_expires_in: str = "7d"
     whatsapp_api_token: str = ""

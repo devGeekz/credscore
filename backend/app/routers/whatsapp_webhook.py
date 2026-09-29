@@ -9,7 +9,7 @@ from app.models import Merchant, Statement
 from app.services.consent_service import generate_and_store_otp, is_duplicate_message, verify_otp
 from app.services.storage_service import upload_statement_file
 from app.services.whatsapp_service import InboundMessage, download_media, parse_webhook_payload, send_text_message
-from app.workers.parse_tasks import parse_statement_task
+from app.workers.parse_tasks import queue_parse
 
 router = APIRouter()
 
@@ -97,6 +97,6 @@ def _handle_statement_upload(msg: InboundMessage, merchant: Merchant, db: Sessio
     db.commit()
     db.refresh(statement)
 
-    parse_statement_task.delay(str(statement.id))
+    queue_parse(statement.id)
 
     send_text_message(msg.from_phone, "Got it — your statement is being processed.")

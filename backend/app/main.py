@@ -6,7 +6,6 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.config import settings
 from app.middleware.rate_limiter import limiter
-from app.routers import auth, merchants, statements
 from app.utils.errors import register_exception_handlers
 from app.routers import auth, merchants, statements, whatsapp_webhook
 
