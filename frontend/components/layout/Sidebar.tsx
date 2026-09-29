@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/dashboard/merchants", label: "Applicants" },
   { href: "/dashboard/reports", label: "Reports" },
   { href: "/dashboard/api-keys", label: "API keys" },
+  { href: "/dashboard/settings", label: "Settings" },
 ];
 
 export function Sidebar() {

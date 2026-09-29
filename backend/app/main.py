@@ -9,6 +9,9 @@ from app.middleware.rate_limiter import limiter
 from app.utils.errors import register_exception_handlers
 from app.routers import auth, dashboard, merchants, reports, statements, whatsapp_webhook
 
+# aliased: plain `settings` here would shadow app.config.settings
+from app.routers import settings as settings_router
+
 app = FastAPI(title="CredScore API", version="0.1.0")
 
 # Rate limiting
@@ -24,6 +27,7 @@ app.include_router(merchants.router, prefix="/api/v1/merchants", tags=["merchant
 app.include_router(statements.router, prefix="/api/v1/statements", tags=["statements"])
 app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["reports"])
+app.include_router(settings_router.router, prefix="/api/v1/settings", tags=["settings"])
 app.include_router(whatsapp_webhook.router, prefix="/api/v1/webhooks/whatsapp", tags=["whatsapp"])
 
 app.add_middleware(

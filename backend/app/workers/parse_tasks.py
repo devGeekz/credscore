@@ -2,8 +2,6 @@
 classify -> score -> persist a ScoreReport."""
 
 import logging
-import socket
-from urllib.parse import urlparse
 from uuid import UUID
 
 from app.config import settings
@@ -14,6 +12,8 @@ from app.engine.normalize import normalize
 from app.engine.scoring_model import score
 from app.models import ScoreReport, Statement
 from app.services.storage_service import download_statement_file
+from app.services.webhook_service import fire_event
+from app.utils.queue import broker_reachable
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger("credscore")
@@ -30,7 +30,8 @@ def parse_statement_task(self, statement_id: str):
             return
 
         metrics, (period_start, period_end) = _score_statement(statement)
-        _persist(db, statement, metrics, period_start, period_end)
+        report = _persist(db, statement, metrics, period_start, period_end)
+        _notify_lender(db, statement, report)
 
     except Exception as exc:
         db.rollback()
@@ -46,7 +47,7 @@ def parse_statement_task(self, statement_id: str):
 
 def queue_parse(statement_id) -> None:
     """Single entry point for both the web and WhatsApp ingestion paths."""
-    if not _broker_reachable():
+    if not broker_reachable():
         if settings.environment == "development":
             # ponytail: no broker locally — parse inline so E2E is testable
             try:
@@ -65,18 +66,6 @@ def queue_parse(statement_id) -> None:
         logger.exception("Could not queue parse for %s", statement_id)
 
 
-def _broker_reachable(timeout: float = 0.25) -> bool:
-    """Probe before publishing. Celery's publish+result-backend retries block
-    for ~110s when Redis is down — an API request must not absorb that."""
-    parsed = urlparse(settings.redis_url)
-    address = (parsed.hostname or "localhost", parsed.port or 6379)
-    try:
-        with socket.create_connection(address, timeout=timeout):
-            return True
-    except OSError:
-        return False
-
-
 def _score_statement(statement: Statement) -> tuple[dict, tuple]:
     data = download_statement_file(statement.file_url)
     raw = extract_dataframe(data, statement.file_url)
@@ -84,7 +73,7 @@ def _score_statement(statement: Statement) -> tuple[dict, tuple]:
     return score(flows), (flows["ts"].min(), flows["ts"].max())
 
 
-def _persist(db, statement: Statement, metrics: dict, period_start, period_end) -> None:
+def _persist(db, statement: Statement, metrics: dict, period_start, period_end) -> ScoreReport:
     # Upsert: a retried task must not create a second report for one statement.
     report = db.query(ScoreReport).filter(ScoreReport.statement_id == statement.id).first()
     if report is None:
@@ -98,3 +87,35 @@ def _persist(db, statement: Statement, metrics: dict, period_start, period_end) 
     statement.period_start = period_start.to_pydatetime()
     statement.period_end = period_end.to_pydatetime()
     db.commit()
+    return report
+
+
+def _notify_lender(db, statement: Statement, report: ScoreReport) -> None:
+    tenant = statement.merchant.tenant
+    if not tenant.webhook_url:
+        return
+
+    fire_event(db, tenant.id, "score.completed", {
+        "report_id": str(report.id),
+        "statement_id": str(statement.id),
+        "merchant": {
+            "id": str(statement.merchant.id),
+            "full_name": statement.merchant.full_name,
+            "phone": statement.merchant.phone,
+        },
+        "score": {
+            "risk_tag": report.risk_tag,
+            "net_verified_revenue": float(report.net_verified_revenue or 0),
+            "cash_flow_consistency": float(report.cash_flow_consistency or 0),
+            "average_daily_balance": float(report.average_daily_balance)
+            if report.average_daily_balance is not None else None,
+            "expense_ratio": float(report.expense_ratio or 0),
+            "counterparty_concentration": float(report.counterparty_concentration or 0),
+            "suggested_credit_limit": float(report.suggested_credit_limit or 0),
+        },
+        "period": {
+            "start": statement.period_start.isoformat() if statement.period_start else None,
+            "end": statement.period_end.isoformat() if statement.period_end else None,
+        },
+        "scored_at": report.created_at.isoformat(),
+    })

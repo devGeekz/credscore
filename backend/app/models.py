@@ -18,6 +18,8 @@ class Tenant(Base):
     subscription_plan = Column(String, default="pilot")
     subscription_status = Column(String, default="trial")
     api_key_hash = Column(String, unique=True, nullable=True)
+    webhook_url = Column(String, nullable=True)
+    webhook_secret = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     users = relationship("User", back_populates="tenant")
