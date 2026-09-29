@@ -55,6 +55,24 @@ async def upload_statement(
     return statement
 
 
+@router.get("", response_model=list[StatementOut])
+def list_statements(
+    merchant_id: uuid.UUID | None = None,
+    limit: int = 50,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    query = (
+        db.query(Statement)
+        .join(Merchant)
+        .filter(Merchant.tenant_id == current_user.tenant_id)
+        .order_by(Statement.created_at.desc())
+    )
+    if merchant_id is not None:
+        query = query.filter(Statement.merchant_id == merchant_id)
+    return query.limit(limit).all()
+
+
 @router.get("/{statement_id}", response_model=StatementOut)
 def get_statement(
     statement_id: uuid.UUID,

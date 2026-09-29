@@ -12,3 +12,4 @@ One line per working session. Newest last.
   E2E: upload 3.3s → ScoreReport (revenue 4500, consistency 84.7, tag strong).
 
 Next: M3 — dashboard (stats/reports endpoints, api-keys, merchant/report pages).
+- 2026-09-29: M3 � dashboard (Phase 4): stats/reports/api-key endpoints, statement list endpoint, consent timestamp in schema; frontend sidebar + overview/applicants/reports/report-detail (recharts)/api-keys pages, risk badge + format helpers. Checks: pytest 15 green, eslint clean, next build green, route smoke test via next start (307 guard + 200s).

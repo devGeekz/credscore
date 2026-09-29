@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { fetchCurrentUser, logout } from "@/lib/auth";
 import type { User } from "@/lib/types";
 
@@ -31,9 +32,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      {/* Sidebar nav (Merchants, Reports, API Keys, Settings) arrives in
-          Phase 4 once those pages actually exist. */}
-      <main className="p-6">{children}</main>
+      <div className="flex min-h-[calc(100vh-57px)]">
+        <Sidebar />
+        <main className="flex-1 p-6">{children}</main>
+      </div>
     </div>
   );
 }

@@ -16,3 +16,10 @@ export async function uploadStatement(merchantId: string, file: File): Promise<S
   const { data } = await api.post<Statement>("/api/v1/statements/upload", formData);
   return data;
 }
+
+export async function listStatements(merchantId?: string): Promise<Statement[]> {
+  const { data } = await api.get<Statement[]>("/api/v1/statements", {
+    params: merchantId ? { merchant_id: merchantId } : {},
+  });
+  return data;
+}

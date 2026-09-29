@@ -8,6 +8,7 @@ export interface Merchant {
   business_name: string | null;
   telco: string | null;
   consent_verified: boolean;
+  consent_timestamp: string | null;
   created_at: string;
 }
 

@@ -20,6 +20,7 @@ class MerchantOut(BaseModel):
     business_name: Optional[str]
     telco: Optional[str]
     consent_verified: bool
+    consent_timestamp: Optional[datetime] = None
     created_at: datetime
 
     class Config:

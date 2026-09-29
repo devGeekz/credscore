@@ -51,3 +51,4 @@ Thumbs.db
 # Local statement files (storage fallback)
 backend/storage/
 *.pid
+*.tsbuildinfo
