@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,7 +22,11 @@ class Settings(BaseSettings):
     app_url: str = "http://localhost:8000"
     webhook_signing_secret: str = "dev-secret"
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    # Absolute so it loads regardless of the caller's cwd (pytest, workers)
+    model_config = SettingsConfigDict(
+        env_file=Path(__file__).resolve().parents[1] / ".env",
+        env_file_encoding="utf-8",
+    )
 
 
 settings = Settings()

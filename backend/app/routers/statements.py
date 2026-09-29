@@ -49,8 +49,8 @@ async def upload_statement(
     )
     db.add(statement)
     db.commit()
-    db.refresh(statement)
     queue_parse(statement.id)
+    db.refresh(statement)  # the inline (dev) parse may have finished already
 
     return statement
 
