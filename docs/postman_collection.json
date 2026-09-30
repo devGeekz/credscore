@@ -19,7 +19,7 @@
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"ada@example.com\",\n  \"password\": \"Password123!\",\n  \"name\": \"Ada Admin\",\n  \"role\": \"admin\"\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"you@example.com\",\n  \"password\": \"your-password\",\n  \"name\": \"Your Name\",\n  \"role\": \"admin\"\n}" }
           }
         },
         {
@@ -39,7 +39,7 @@
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"ada@example.com\",\n  \"password\": \"Password123!\"\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"you@example.com\",\n  \"password\": \"your-password\"\n}" }
           }
         },
         {
