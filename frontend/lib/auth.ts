@@ -32,3 +32,18 @@ export async function fetchCurrentUser(): Promise<User> {
   const { data } = await api.get<User>("/api/v1/auth/me");
   return data;
 }
+
+export async function fetchTeam(): Promise<User[]> {
+  const { data } = await api.get<User[]>("/api/v1/auth/users");
+  return data;
+}
+
+export async function createTeamMember(payload: {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+}): Promise<User> {
+  const { data } = await api.post<User>("/api/v1/auth/users", payload);
+  return data;
+}

@@ -8,8 +8,9 @@ from app.database import get_db
 from app.middleware.rate_limiter import limiter
 from app.middleware.tenant import get_current_user
 from app.models import Tenant, User
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserOut
+from app.schemas.auth import CreateUserRequest, LoginRequest, RegisterRequest, TokenResponse, UserOut
 from app.schemas.report import ApiKeyCreated, ApiKeyOut
+from app.utils.errors import ConflictError, ForbiddenError
 from app.utils.security import create_access_token, hash_password, verify_password
 
 router = APIRouter()
@@ -75,6 +76,43 @@ def login(request: Request, payload: LoginRequest, db: Session = db_dependency):
 @router.get("/me", response_model=UserOut)
 def me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.get("/users", response_model=list[UserOut])
+def list_users(
+    current_user: User = Depends(get_current_user),
+    db: Session = db_dependency,
+):
+    return (
+        db.query(User)
+        .filter(User.tenant_id == current_user.tenant_id)
+        .order_by(User.created_at)
+        .all()
+    )
+
+
+@router.post("/users", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+def create_user(
+    payload: CreateUserRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = db_dependency,
+):
+    """admins add teammates to their own tenant only."""
+    if current_user.role != "admin":
+        raise ForbiddenError("Only admins can add team members")
+    if db.query(User).filter(User.email == payload.email).first():
+        raise ConflictError("A user with this email already exists")
+    user = User(
+        tenant_id=current_user.tenant_id,
+        email=payload.email,
+        name=payload.name,
+        role=payload.role,
+        password_hash=hash_password(payload.password),
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 def _masked(stored: str) -> str:

@@ -27,3 +27,4 @@ Next: M5 — hardening (statement status polling / re-queue), then M6 — docs +
 
 Next: M6 - docs + deploy (Railway/Vercel/WhatsApp credentials needed).
 - 2026-09-30: M6 part 1 - docs + deploy configs (Phase 7): full README (architecture, setup, env table, API walkthrough, testing, demo script), docs/postman_collection.json (every endpoint, baseUrl/token vars), .env.example synced with all settings, backend/Procfile (web + celery worker), deleted tracked temp/ alembic junk. Blocked on user: Railway/Vercel accounts, WhatsApp prod number, webhook.site URL.
+- 2026-09-30: post-M6 fix - team management: GET/POST /auth/users (admin-only, roles admin/underwriter/viewer, tenant-scoped, duplicate -> 409), Team section on settings page with add-member form (admins only). Checks: pytest 34 green, eslint 0 errors, build green, live smoke 201 + team list.

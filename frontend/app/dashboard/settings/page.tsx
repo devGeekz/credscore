@@ -3,6 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import type { AxiosError } from "axios";
+import { createTeamMember, fetchCurrentUser, fetchTeam } from "@/lib/auth";
 import {
   fetchSettings,
   fetchWebhookDeliveries,
@@ -10,11 +11,22 @@ import {
 } from "@/lib/settings";
 import type { ApiErrorResponse } from "@/lib/types";
 
+const ROLES = [
+  { value: "underwriter", label: "Underwriter" },
+  { value: "viewer", label: "Viewer" },
+  { value: "admin", label: "Admin" },
+];
+
 export default function SettingsPage() {
   const { data: settings, mutate } = useSWR("/api/v1/settings", fetchSettings);
   const { data: deliveries } = useSWR(
     "/api/v1/settings/webhooks",
     fetchWebhookDeliveries,
+  );
+  const { data: me } = useSWR("/api/v1/auth/me", fetchCurrentUser);
+  const { data: team, mutate: mutateTeam } = useSWR(
+    "/api/v1/auth/users",
+    fetchTeam,
   );
   // null until the user types — derived value follows swr data otherwise
   const [urlOverride, setUrlOverride] = useState<string | null>(null);
@@ -22,6 +34,38 @@ export default function SettingsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [invite, setInvite] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "underwriter",
+  });
+  const [inviteBusy, setInviteBusy] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteSaved, setInviteSaved] = useState(false);
+
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault();
+    setInviteBusy(true);
+    setInviteError(null);
+    setInviteSaved(false);
+    try {
+      await createTeamMember(invite);
+      setInvite({ name: "", email: "", password: "", role: "underwriter" });
+      await mutateTeam();
+      setInviteSaved(true);
+      setTimeout(() => setInviteSaved(false), 2500);
+    } catch (err) {
+      const axiosErr = err as AxiosError<ApiErrorResponse>;
+      setInviteError(
+        axiosErr.response?.data?.error?.message ||
+          axiosErr.response?.data?.detail ||
+          "Could not add team member.",
+      );
+    } finally {
+      setInviteBusy(false);
+    }
+  }
 
   async function handleSave(rotate = false) {
     setBusy(true);
@@ -77,6 +121,94 @@ export default function SettingsPage() {
             <dd className="text-gray-900">{settings?.contact_email ?? "…"}</dd>
           </div>
         </dl>
+      </section>
+
+      <section className="rounded-lg border border-gray-200 bg-white p-5">
+        <h2 className="text-sm font-semibold text-gray-900">Team</h2>
+        <ul className="mt-3 divide-y divide-gray-100">
+          {team?.map((member) => (
+            <li
+              key={member.id}
+              className="flex items-center justify-between py-2 text-sm"
+            >
+              <div className="min-w-0">
+                <p className="truncate font-medium text-gray-900">{member.name}</p>
+                <p className="truncate text-xs text-gray-500">{member.email}</p>
+              </div>
+              <span className="ml-3 shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs capitalize text-gray-700">
+                {member.role}
+                {!member.is_active && " · inactive"}
+              </span>
+            </li>
+          ))}
+          {!team?.length && (
+            <li className="py-2 text-sm text-gray-500">Loading…</li>
+          )}
+        </ul>
+
+        {me?.role === "admin" && (
+          <form onSubmit={handleInvite} className="mt-4 space-y-3 border-t border-gray-100 pt-4">
+            <p className="text-xs font-medium text-gray-700">Add a teammate</p>
+            {inviteError && (
+              <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+                {inviteError}
+              </div>
+            )}
+            {inviteSaved && (
+              <div className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
+                Team member added.
+              </div>
+            )}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <input
+                required
+                placeholder="Name"
+                value={invite.name}
+                onChange={(e) => setInvite({ ...invite, name: e.target.value })}
+                className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              />
+              <input
+                required
+                type="email"
+                placeholder="Email"
+                value={invite.email}
+                onChange={(e) => setInvite({ ...invite, email: e.target.value })}
+                className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              />
+              <input
+                required
+                type="password"
+                minLength={8}
+                placeholder="Password (min 8)"
+                value={invite.password}
+                onChange={(e) =>
+                  setInvite({ ...invite, password: e.target.value })
+                }
+                className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              />
+              <div className="flex gap-2">
+                <select
+                  value={invite.role}
+                  onChange={(e) => setInvite({ ...invite, role: e.target.value })}
+                  className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+                >
+                  {ROLES.map((r) => (
+                    <option key={r.value} value={r.value}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  disabled={inviteBusy}
+                  className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+                >
+                  {inviteBusy ? "Adding…" : "Add"}
+                </button>
+              </div>
+            </div>
+          </form>
+        )}
       </section>
 
       <section className="rounded-lg border border-gray-200 bg-white p-5">

@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -16,6 +17,13 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+
+class CreateUserRequest(BaseModel):
+    name: str = Field(min_length=2)
+    email: EmailStr
+    password: str = Field(min_length=8)
+    role: Literal["admin", "underwriter", "viewer"]
 
 
 class UserOut(BaseModel):
