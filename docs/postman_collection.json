@@ -1,0 +1,327 @@
+{
+  "info": {
+    "name": "CredScore",
+    "description": "CredScore API — set baseUrl and token (from POST /auth/login) in the collection variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000/api/v1" },
+    { "key": "rootUrl", "value": "http://localhost:8000" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"ada@example.com\",\n  \"password\": \"Password123!\",\n  \"name\": \"Ada Admin\",\n  \"role\": \"admin\"\n}" }
+          }
+        },
+        {
+          "name": "login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('token', pm.response.json().access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"ada@example.com\",\n  \"password\": \"Password123!\"\n}" }
+          }
+        },
+        {
+          "name": "me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] }
+          }
+        },
+        {
+          "name": "list api keys",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/api-keys", "host": ["{{baseUrl}}"], "path": ["auth", "api-keys"] }
+          }
+        },
+        {
+          "name": "create api key",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/api-keys", "host": ["{{baseUrl}}"], "path": ["auth", "api-keys"] },
+            "description": "one key per tenant; plaintext returned only once"
+          }
+        },
+        {
+          "name": "revoke api key",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/api-keys", "host": ["{{baseUrl}}"], "path": ["auth", "api-keys"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "merchants",
+      "item": [
+        {
+          "name": "list merchants",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/merchants", "host": ["{{baseUrl}}"], "path": ["merchants"] }
+          }
+        },
+        {
+          "name": "create merchant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('merchantId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/merchants", "host": ["{{baseUrl}}"], "path": ["merchants"] },
+            "body": { "mode": "raw", "raw": "{\n  \"full_name\": \"Ama Serwaa\",\n  \"phone\": \"+233209876543\"\n}" }
+          }
+        },
+        {
+          "name": "get merchant",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/merchants/{{merchantId}}", "host": ["{{baseUrl}}"], "path": ["merchants", "{{merchantId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "statements",
+      "item": [
+        {
+          "name": "upload statement",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('statementId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "merchant_id", "value": "{{merchantId}}", "type": "text" },
+                { "key": "file", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/statements/upload", "host": ["{{baseUrl}}"], "path": ["statements", "upload"] },
+            "description": "attach backend/tests/fixtures/momo_sample.csv as the file field (20 uploads/minute)"
+          }
+        },
+        {
+          "name": "list statements",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/statements", "host": ["{{baseUrl}}"], "path": ["statements"] }
+          }
+        },
+        {
+          "name": "get statement",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/statements/{{statementId}}", "host": ["{{baseUrl}}"], "path": ["statements", "{{statementId}}"] }
+          }
+        },
+        {
+          "name": "requeue statement",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/statements/{{statementId}}/requeue", "host": ["{{baseUrl}}"], "path": ["statements", "{{statementId}}", "requeue"] },
+            "description": "202 if it re-parsed, 409 if already parsed"
+          }
+        },
+        {
+          "name": "download statement",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/statements/{{statementId}}/download", "host": ["{{baseUrl}}"], "path": ["statements", "{{statementId}}", "download"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "reports",
+      "item": [
+        {
+          "name": "list reports",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('reportId', pm.response.json()[0].id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/reports", "host": ["{{baseUrl}}"], "path": ["reports"] }
+          }
+        },
+        {
+          "name": "get report",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/reports/{{reportId}}", "host": ["{{baseUrl}}"], "path": ["reports", "{{reportId}}"] }
+          }
+        },
+        {
+          "name": "export reports (CSV)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/reports/export", "host": ["{{baseUrl}}"], "path": ["reports", "export"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "dashboard",
+      "item": [
+        {
+          "name": "stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/stats", "host": ["{{baseUrl}}"], "path": ["dashboard", "stats"] }
+          }
+        },
+        {
+          "name": "consent export (CSV)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/consent-export", "host": ["{{baseUrl}}"], "path": ["dashboard", "consent-export"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "settings",
+      "item": [
+        {
+          "name": "get settings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/settings", "host": ["{{baseUrl}}"], "path": ["settings"] }
+          }
+        },
+        {
+          "name": "update settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/settings", "host": ["{{baseUrl}}"], "path": ["settings"] },
+            "body": { "mode": "raw", "raw": "{\n  \"webhook_url\": \"https://webhook.site/REPLACE\",\n  \"webhook_secret\": \"change-me\"\n}" },
+            "description": "private/internal targets are refused when ENVIRONMENT=production"
+          }
+        },
+        {
+          "name": "webhook deliveries",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/settings/webhooks", "host": ["{{baseUrl}}"], "path": ["settings", "webhooks"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "whatsapp webhook",
+      "item": [
+        {
+          "name": "verify (GET)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=REPLACE&hub.challenge=123",
+              "host": ["{{baseUrl}}"],
+              "path": ["webhooks", "whatsapp"],
+              "query": [
+                { "key": "hub.mode", "value": "subscribe" },
+                { "key": "hub.verify_token", "value": "REPLACE" },
+                { "key": "hub.challenge", "value": "123" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "inbound message (POST)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/webhooks/whatsapp", "host": ["{{baseUrl}}"], "path": ["webhooks", "whatsapp"] },
+            "body": { "mode": "raw", "raw": "{\n  \"entry\": [{\n    \"changes\": [{\n      \"value\": {\n        \"messages\": [{\n          \"from\": \"+233209876543\",\n          \"type\": \"text\",\n          \"text\": { \"body\": \"YES\" }\n        }]\n      }\n    }]\n  }]\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "health",
+      "item": [
+        {
+          "name": "health",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{rootUrl}}/health", "host": ["{{rootUrl}}"], "path": ["health"] }
+          }
+        }
+      ]
+    }
+  ]
+}
