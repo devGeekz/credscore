@@ -4,7 +4,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+import app.database as app_db
 import app.models  # noqa: F401  (registers tables on Base.metadata)
+import app.workers.parse_tasks as parse_tasks_module
 from app.database import Base, get_db
 from app.main import app
 
@@ -21,6 +23,16 @@ def db_session():
     session = sessionmaker(bind=engine, autoflush=False, autocommit=False)()
     yield session
     session.close()
+
+
+@pytest.fixture(autouse=True)
+def _sessions_to_test_db(db_session, monkeypatch):
+    """middleware and the inline parse open their own sessions — point them
+    at sqlite. a fresh session per call: closing one must not detach another
+    caller's instances (StaticPool shares the single sqlite connection)."""
+    factory = sessionmaker(bind=db_session.get_bind(), autoflush=False, autocommit=False)
+    monkeypatch.setattr(app_db, "SessionLocal", factory)
+    monkeypatch.setattr(parse_tasks_module, "SessionLocal", factory)
 
 
 @pytest.fixture()

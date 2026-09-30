@@ -1,10 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import useSWR from "swr";
 import { UploadStatementForm } from "@/components/merchants/UploadStatementForm";
 import { useMerchants } from "@/hooks/useMerchants";
 import { formatDate } from "@/lib/format";
-import { listStatements, type Statement } from "@/lib/statements";
+import {
+  listStatements,
+  requeueStatement,
+  type Statement,
+} from "@/lib/statements";
 
 const STATUS_STYLES: Record<Statement["parse_status"], string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -14,7 +19,26 @@ const STATUS_STYLES: Record<Statement["parse_status"], string> = {
 
 export default function MerchantsPage() {
   const { merchants, isLoading } = useMerchants();
-  const { data: statements } = useSWR("/api/v1/statements", () => listStatements());
+  const { data: statements, mutate: refreshStatements } = useSWR(
+    "/api/v1/statements",
+    () => listStatements(),
+    // poll only while something is still being parsed
+    {
+      refreshInterval: (data) =>
+        data?.some((statement) => statement.parse_status === "pending") ? 3000 : 0,
+    },
+  );
+  const [requeueing, setRequeueing] = useState<string | null>(null);
+
+  async function handleRequeue(statementId: string) {
+    setRequeueing(statementId);
+    try {
+      await requeueStatement(statementId);
+      await refreshStatements();
+    } finally {
+      setRequeueing(null);
+    }
+  }
 
   // statements arrive newest-first, so the first hit per merchant is its latest.
   const latestByMerchant = new Map<string, Statement>();
@@ -41,6 +65,7 @@ export default function MerchantsPage() {
             No applicants yet — add one while uploading a statement below.
           </p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
@@ -74,10 +99,21 @@ export default function MerchantsPage() {
                     </td>
                     <td className="py-2.5">
                       {latest ? (
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[latest.parse_status]}`}
-                        >
-                          {latest.parse_status}
+                        <span className="flex items-center gap-2">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[latest.parse_status]}`}
+                          >
+                            {latest.parse_status}
+                          </span>
+                          {latest.parse_status === "failed" && (
+                            <button
+                              onClick={() => handleRequeue(latest.id)}
+                              disabled={requeueing === latest.id}
+                              className="text-xs text-blue-600 hover:underline disabled:opacity-50"
+                            >
+                              {requeueing === latest.id ? "Retrying…" : "Retry"}
+                            </button>
+                          )}
                         </span>
                       ) : (
                         <span className="text-xs text-gray-400">none</span>
@@ -91,6 +127,7 @@ export default function MerchantsPage() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </section>
 

@@ -1,7 +1,9 @@
+import csv
+import io
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
@@ -68,4 +70,59 @@ def dashboard_stats(
         reports=sum(risk_mix.values()),
         risk_mix=risk_mix,
         average_credit_limit=float(average_limit) if average_limit is not None else None,
+    )
+
+
+@router.get("/consent-export")
+def consent_export(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """dpc-aligned consent audit: one csv row per applicant."""
+    tenant_id = current_user.tenant_id
+    merchants = (
+        db.query(Merchant)
+        .filter(Merchant.tenant_id == tenant_id)
+        .order_by(Merchant.created_at.asc())
+        .all()
+    )
+
+    # asc order means the last status seen per merchant is its latest
+    statement_info: dict = {}
+    statements = (
+        db.query(Statement)
+        .join(Merchant)
+        .filter(Merchant.tenant_id == tenant_id)
+        .order_by(Statement.created_at.asc())
+        .all()
+    )
+    for statement in statements:
+        entry = statement_info.setdefault(statement.merchant_id, [0, ""])
+        entry[0] += 1
+        entry[1] = statement.parse_status
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow([
+        "merchant_id", "full_name", "phone", "business_name",
+        "consent_verified", "consent_timestamp",
+        "statement_count", "latest_parse_status",
+    ])
+    for merchant in merchants:
+        count, status = statement_info.get(merchant.id, [0, ""])
+        writer.writerow([
+            merchant.id,
+            merchant.full_name,
+            merchant.phone,
+            merchant.business_name or "",
+            merchant.consent_verified,
+            merchant.consent_timestamp.isoformat() if merchant.consent_timestamp else "",
+            count,
+            status,
+        ])
+
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="consent-audit.csv"'},
     )

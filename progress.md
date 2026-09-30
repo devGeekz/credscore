@@ -23,3 +23,6 @@ Next: M3 — dashboard (stats/reports endpoints, api-keys, merchant/report pages
   delivery verified at local receiver → logged delivered 200 → usage metered.
 
 Next: M5 — hardening (statement status polling / re-queue), then M6 — docs + deploy.
+- 2026-09-30: M5 - hardening (Phase 6): audit-trail middleware (audit_logs rows on every successful mutation, fail-open), 20/min upload rate limit, 4 security headers on FastAPI + Next, CORS from settings, stdlib JSON logging, optional Sentry, WhatsApp webhook validation, SSE-AES256 at rest + signed download endpoint, consent-audit CSV export, statement requeue endpoint (202/409) + frontend polling + retry, dashboard error boundary + loading skeleton + responsive sidebar/tables. Checks: pytest 30 green, eslint 0 errors, next build green, route smoke 307/200, live probes - audit row on Neon, security headers on both apps.
+
+Next: M6 - docs + deploy (Railway/Vercel/WhatsApp credentials needed).

@@ -63,6 +63,7 @@ export default function DashboardPage() {
             No reports yet — upload a statement below.
           </p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
@@ -96,6 +97,7 @@ export default function DashboardPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </section>
 

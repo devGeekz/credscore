@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     storage_secret_key: str = ""
     storage_endpoint: str = ""
     app_url: str = "http://localhost:8000"
+    cors_origins: str = ""  # comma-separated; empty = dev default / none
+    sentry_dsn: str = ""
     webhook_signing_secret: str = "dev-secret"
 
     # absolute so it loads regardless of the caller's cwd (tests, workers)

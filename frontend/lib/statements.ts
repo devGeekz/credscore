@@ -23,3 +23,10 @@ export async function listStatements(merchantId?: string): Promise<Statement[]> 
   });
   return data;
 }
+
+export async function requeueStatement(statementId: string): Promise<Statement> {
+  const { data } = await api.post<Statement>(
+    `/api/v1/statements/${statementId}/requeue`,
+  );
+  return data;
+}

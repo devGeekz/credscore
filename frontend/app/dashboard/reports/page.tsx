@@ -54,6 +54,7 @@ export default function ReportsPage() {
         ) : reports.length === 0 ? (
           <p className="px-5 py-6 text-sm text-gray-500">No reports match this filter.</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
@@ -91,6 +92,7 @@ export default function ReportsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </section>
     </div>

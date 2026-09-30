@@ -1,11 +1,12 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Query, Request, Response
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
 from app.models import Merchant, Statement
+from app.schemas.whatsapp import WhatsAppWebhookIn
 from app.services.consent_service import generate_and_store_otp, is_duplicate_message, verify_otp
 from app.services.storage_service import upload_statement_file
 from app.services.whatsapp_service import InboundMessage, download_media, parse_webhook_payload, send_text_message
@@ -26,9 +27,8 @@ def verify_webhook(
 
 
 @router.post("")
-async def receive_webhook(request: Request, db: Session = Depends(get_db)):
-    payload = await request.json()
-    messages = parse_webhook_payload(payload)
+async def receive_webhook(payload: WhatsAppWebhookIn, db: Session = Depends(get_db)):
+    messages = parse_webhook_payload(payload.model_dump())
 
     for msg in messages:
         if is_duplicate_message(msg.wamid):
