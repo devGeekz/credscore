@@ -6,11 +6,11 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.middleware.rate_limiter import limiter
-from app.middleware.tenant import get_current_user
+from app.middleware.tenant import get_current_user, require_admin
 from app.models import Tenant, User
 from app.schemas.auth import CreateUserRequest, LoginRequest, RegisterRequest, TokenResponse, UserOut
 from app.schemas.report import ApiKeyCreated, ApiKeyOut
-from app.utils.errors import ConflictError, ForbiddenError
+from app.utils.errors import ConflictError
 from app.utils.security import create_access_token, hash_password, verify_password
 
 router = APIRouter()
@@ -94,12 +94,10 @@ def list_users(
 @router.post("/users", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def create_user(
     payload: CreateUserRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
     db: Session = db_dependency,
 ):
     """admins add teammates to their own tenant only."""
-    if current_user.role != "admin":
-        raise ForbiddenError("Only admins can add team members")
     if db.query(User).filter(User.email == payload.email).first():
         raise ConflictError("A user with this email already exists")
     user = User(
@@ -123,7 +121,7 @@ def _masked(stored: str) -> str:
     "/api-keys", response_model=ApiKeyCreated, status_code=status.HTTP_201_CREATED
 )
 def create_api_key(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
     db: Session = db_dependency,
 ):
     """one key per tenant (matches the single tenants.api_key_hash column).
@@ -148,7 +146,7 @@ def get_api_key(
 
 @router.delete("/api-keys", status_code=status.HTTP_204_NO_CONTENT)
 def revoke_api_key(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
     db: Session = db_dependency,
 ):
     tenant = db.get(Tenant, current_user.tenant_id)

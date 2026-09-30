@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.middleware.tenant import get_current_user
+from app.middleware.tenant import get_current_user, require_write
 from app.models import Merchant, User
 from app.schemas.merchant import MerchantCreate, MerchantOut
 from app.utils.errors import NotFoundError
@@ -15,7 +15,7 @@ router = APIRouter()
 @router.post("", response_model=MerchantOut, status_code=201)
 def create_merchant(
     payload: MerchantCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_write),
     db: Session = Depends(get_db),
 ):
     merchant = Merchant(tenant_id=current_user.tenant_id, **payload.model_dump())

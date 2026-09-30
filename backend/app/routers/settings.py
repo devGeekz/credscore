@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings as app_settings
 from app.database import get_db
-from app.middleware.tenant import get_current_user
+from app.middleware.tenant import get_current_user, require_admin
 from app.models import Tenant, User, WebhookLog
 from app.services.billing_service import usage
 
@@ -124,7 +124,7 @@ def webhook_deliveries(
 @router.put("", response_model=SettingsOut)
 def update_settings(
     payload: SettingsUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     tenant = db.get(Tenant, current_user.tenant_id)

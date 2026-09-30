@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import User
+from app.utils.errors import ForbiddenError
 from app.utils.security import decode_access_token
 
 bearer_scheme = HTTPBearer()
@@ -37,3 +38,17 @@ def get_current_user(
 
 def get_current_tenant_id(current_user: User = Depends(get_current_user)) -> uuid.UUID:
     return current_user.tenant_id
+
+
+def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    """admins only: org settings, api keys, team management."""
+    if current_user.role != "admin":
+        raise ForbiddenError("Admins only")
+    return current_user
+
+
+def require_write(current_user: User = Depends(get_current_user)) -> User:
+    """viewers are read-only; underwriters and admins can act."""
+    if current_user.role == "viewer":
+        raise ForbiddenError("Viewers have read-only access")
+    return current_user

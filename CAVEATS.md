@@ -5,11 +5,6 @@ Nothing here blocks a demo; items are ordered by how much they matter.
 
 ## 1. Product gaps
 
-- **Roles are labels, not limits.** Team members can now be created with
-  `admin / underwriter / viewer` roles, but only one route checks them
-  (adding more users). An `underwriter` or `viewer` can still upload,
-  change settings, etc. — role enforcement needs to be applied across the
-  routers.
 - **Billing is metering only.** Plans cap monthly uploads and the usage
   meter works, but there is no payment or upgrade flow (Stripe etc.).
 - **No email anywhere.** No invites (teammates get a password you set for
@@ -66,6 +61,9 @@ Nothing here blocks a demo; items are ordered by how much they matter.
 
 ## Already fixed
 
+- ~~Roles are labels, not limits~~ — `require_admin` guards settings,
+  API keys and team management; `require_write` blocks viewers from
+  merchants/uploads/requeue.
 - ~~One user per organization~~ — team management (admin-created users,
   roles, Settings-page form) added in the latest commit.
 - ~~Missing security headers~~ — 4 headers on FastAPI + Next, HSTS in prod.
@@ -75,8 +73,7 @@ Nothing here blocks a demo; items are ordered by how much they matter.
 
 ## Suggested order to burn this down
 
-1. Apply role checks across routers (small, closes a real hole)
-2. Try one real MTN-generated statement end-to-end
-3. Production deploy (needs credentials) + Redis-backed rate limits
-4. Refresh tokens / shorter expiry + password reset flow
-5. Frontend smoke tests (Playwright, ~5 journeys)
+1. Try one real MTN-generated statement end-to-end
+2. Production deploy (needs credentials) + Redis-backed rate limits
+3. Refresh tokens / shorter expiry + password reset flow
+4. Frontend smoke tests (Playwright, ~5 journeys)

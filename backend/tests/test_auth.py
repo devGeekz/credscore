@@ -143,3 +143,59 @@ def test_invalid_role_rejected(client):
         },
     )
     assert bad.status_code == 422
+
+
+def _make_member(client, admin_token, email, role):
+    created = client.post(
+        "/api/v1/auth/users",
+        headers=_auth(admin_token),
+        json={"name": role.title(), "email": email, "password": "Password123!", "role": role},
+    )
+    assert created.status_code == 201
+    return client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": "Password123!"},
+    ).json()["access_token"]
+
+
+def test_viewer_is_read_only(client):
+    admin = _register(client, email="roadmin@example.com").json()["access_token"]
+    viewer = _make_member(client, admin, "viewer1@example.com", "viewer")
+
+    # reads still work
+    assert client.get("/api/v1/dashboard/stats", headers=_auth(viewer)).status_code == 200
+    # writes are rejected
+    merchant = client.post(
+        "/api/v1/merchants",
+        headers=_auth(viewer),
+        json={"full_name": "Nope", "phone": "+233200000002"},
+    )
+    assert merchant.status_code == 403
+    assert client.put(
+        "/api/v1/settings",
+        headers=_auth(viewer),
+        json={"webhook_url": ""},
+    ).status_code == 403
+    assert client.post("/api/v1/auth/api-keys", headers=_auth(viewer)).status_code == 403
+
+
+def test_underwriter_can_write_but_not_admin_things(client):
+    admin = _register(client, email="uwadmin@example.com").json()["access_token"]
+    officer = _make_member(client, admin, "uw@example.com", "underwriter")
+
+    merchant = client.post(
+        "/api/v1/merchants",
+        headers=_auth(officer),
+        json={"full_name": "Allowed", "phone": "+233200000003"},
+    )
+    assert merchant.status_code == 201
+    # admin-only: settings, api keys, team
+    assert client.put(
+        "/api/v1/settings", headers=_auth(officer), json={"webhook_url": ""}
+    ).status_code == 403
+    assert client.post("/api/v1/auth/api-keys", headers=_auth(officer)).status_code == 403
+    assert client.post(
+        "/api/v1/auth/users",
+        headers=_auth(officer),
+        json={"name": "X", "email": "x@example.com", "password": "Password123!", "role": "viewer"},
+    ).status_code == 403

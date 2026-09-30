@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.middleware.rate_limiter import limiter
-from app.middleware.tenant import get_current_user
+from app.middleware.tenant import get_current_user, require_write
 from app.models import Merchant, Statement, User
 from app.schemas.statement import StatementOut
 from app.services.storage_service import (
@@ -31,7 +31,7 @@ async def upload_statement(
     request: Request,
     merchant_id: uuid.UUID = Form(...),
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_write),
     db: Session = Depends(get_db),
 ):
     merchant = (
@@ -103,7 +103,7 @@ def get_statement(
 @router.post("/{statement_id}/requeue", response_model=StatementOut, status_code=202)
 def requeue_statement(
     statement_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_write),
     db: Session = Depends(get_db),
 ):
     statement = (
