@@ -57,9 +57,10 @@ export default function SettingsPage() {
       setTimeout(() => setInviteSaved(false), 2500);
     } catch (err) {
       const axiosErr = err as AxiosError<ApiErrorResponse>;
+      const detail = axiosErr.response?.data?.detail;
       setInviteError(
         axiosErr.response?.data?.error?.message ||
-          axiosErr.response?.data?.detail ||
+          (typeof detail === "string" ? detail : null) ||
           "Could not add team member.",
       );
     } finally {

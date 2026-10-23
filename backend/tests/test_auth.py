@@ -59,6 +59,13 @@ def _auth(token):
     return {"Authorization": f"Bearer {token}"}
 
 
+def _login(client, email):
+    return client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": "Password123!"},
+    )
+
+
 def test_admin_adds_team_member_and_they_can_log_in(client):
     token = _register(client, email="teamadmin@example.com").json()["access_token"]
     created = client.post(
@@ -199,3 +206,74 @@ def test_underwriter_can_write_but_not_admin_things(client):
         headers=_auth(officer),
         json={"name": "X", "email": "x@example.com", "password": "Password123!", "role": "viewer"},
     ).status_code == 403
+
+
+def test_refresh_rotation_flow(client):
+    _register(client, email="refresh@example.com")
+    body = _login(client, "refresh@example.com").json()
+    assert body["refresh_token"]
+
+    # rotate: new pair, old token dead
+    first = client.post("/api/v1/auth/refresh", json={"refresh_token": body["refresh_token"]})
+    assert first.status_code == 200
+    new = first.json()
+    assert new["refresh_token"] != body["refresh_token"]
+    assert client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": body["refresh_token"]}
+    ).status_code == 401
+
+    # logout revokes the latest token
+    client.post("/api/v1/auth/logout", json={"refresh_token": new["refresh_token"]})
+    assert client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": new["refresh_token"]}
+    ).status_code == 401
+
+
+def test_garbage_refresh_rejected(client):
+    assert client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": "nope"}
+    ).status_code == 401
+
+
+def test_password_reset_flow(client, monkeypatch):
+    from app.routers import auth as auth_module
+    captured = {}
+    monkeypatch.setattr(
+        auth_module, "send_password_reset_email",
+        lambda to, link: captured.update(link=link),
+    )
+
+    _register(client, email="reset@example.com")
+    # a pending session gets killed by the reset
+    stale_refresh = _login(client, "reset@example.com").json()["refresh_token"]
+
+    # never enumerates accounts: unknown email answers the same
+    assert client.post(
+        "/api/v1/auth/forgot-password", json={"email": "reset@example.com"}
+    ).status_code == 200
+    assert client.post(
+        "/api/v1/auth/forgot-password", json={"email": "ghost@example.com"}
+    ).status_code == 200
+
+    token = captured["link"].split("token=")[1]
+
+    assert client.post(
+        "/api/v1/auth/reset-password",
+        json={"token": token, "new_password": "NewPassword123!"},
+    ).status_code == 200
+    # single-use
+    assert client.post(
+        "/api/v1/auth/reset-password",
+        json={"token": token, "new_password": "Another123x"},
+    ).status_code == 401
+    # old password dead, new one works
+    assert client.post(
+        "/api/v1/auth/login", json={"email": "reset@example.com", "password": "Password123!"}
+    ).status_code == 401
+    assert client.post(
+        "/api/v1/auth/login", json={"email": "reset@example.com", "password": "NewPassword123!"}
+    ).status_code == 200
+    # sessions from before the reset are revoked
+    assert client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": stale_refresh}
+    ).status_code == 401

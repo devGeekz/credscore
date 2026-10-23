@@ -51,9 +51,10 @@ export function UploadStatementForm() {
       setFile(null);
     } catch (err) {
       const axiosErr = err as AxiosError<ApiErrorResponse>;
+      const detail = axiosErr.response?.data?.detail;
       setError(
         axiosErr.response?.data?.error?.message ||
-          axiosErr.response?.data?.detail ||
+          (typeof detail === "string" ? detail : null) ||
           "Upload failed."
       );
     } finally {

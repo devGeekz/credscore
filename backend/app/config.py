@@ -11,7 +11,8 @@ class Settings(BaseSettings):
     # set to memory:// in dev when redis isn't running; empty = use redis_url
     rate_limit_storage_uri: str = ""
     jwt_secret: str
-    jwt_expires_in: str = "7d"
+    jwt_expires_in: str = "60m"
+    refresh_expires_in: str = "7d"
     whatsapp_api_token: str = ""
     whatsapp_phone_number_id: str = ""
     whatsapp_verify_token: str = ""
@@ -23,6 +24,13 @@ class Settings(BaseSettings):
     cors_origins: str = ""  # comma-separated; empty = dev default / none
     sentry_dsn: str = ""
     webhook_signing_secret: str = "dev-secret"
+    # password-reset email delivery; empty smtp_host logs the link instead
+    web_url: str = "http://localhost:3000"
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = "no-reply@credscore.app"
 
     # absolute so it loads regardless of the caller's cwd (tests, workers)
     model_config = SettingsConfigDict(

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { register } from "@/lib/auth";
 import type { AxiosError } from "axios";
 import type { ApiErrorResponse } from "@/lib/types";
@@ -13,6 +14,7 @@ const ORG_TYPES = [
 ];
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [form, setForm] = useState({
     tenant_name: "",
     org_type: "mfi",
@@ -34,7 +36,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(form);
-      window.location.href = "/dashboard";
+      router.push("/dashboard");
     } catch (err) {
       const axiosErr = err as AxiosError<ApiErrorResponse>;
       setError(

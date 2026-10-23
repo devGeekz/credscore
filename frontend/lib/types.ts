@@ -11,6 +11,7 @@ export interface User {
 export interface TokenResponse {
   access_token: string;
   token_type: string;
+  refresh_token?: string | null;
   user: User;
 }
 

@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import { api } from "./api";
-import { setToken, clearToken } from "./cookies";
+import {
+  clearToken,
+  setRefreshToken,
+  setToken,
+  getRefreshToken,
+} from "./cookies";
 import type {
   LoginPayload,
   RegisterPayload,
@@ -8,10 +13,15 @@ import type {
   User,
 } from "./types";
 
+async function storeTokens(data: TokenResponse): Promise<User> {
+  setToken(data.access_token);
+  if (data.refresh_token) setRefreshToken(data.refresh_token);
+  return data.user;
+}
+
 export async function login(payload: LoginPayload): Promise<User> {
   const { data } = await api.post<TokenResponse>("/api/v1/auth/login", payload);
-  setToken(data.access_token);
-  return data.user;
+  return storeTokens(data);
 }
 
 export async function register(payload: RegisterPayload): Promise<User> {
@@ -19,11 +29,19 @@ export async function register(payload: RegisterPayload): Promise<User> {
     "/api/v1/auth/register",
     payload,
   );
-  setToken(data.access_token);
-  return data.user;
+  return storeTokens(data);
 }
 
-export function logout(): void {
+export async function logout(): Promise<void> {
+  const refresh = getRefreshToken();
+  try {
+    if (refresh) {
+      // revokes the session server-side; cookie clearing is best-effort
+      await api.post("/api/v1/auth/logout", { refresh_token: refresh });
+    }
+  } catch {
+    // already signed out or network gone — cookies get cleared regardless
+  }
   clearToken();
   redirect("/login");
 }

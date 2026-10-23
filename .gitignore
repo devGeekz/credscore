@@ -53,3 +53,9 @@ backend/storage/
 *.pid
 *.tsbuildinfo
 Fintech_Lab_Form__Transcription.md
+
+# ---- Playwright ----
+frontend/test-results/
+frontend/playwright-report/
+frontend/.last-run.json
+

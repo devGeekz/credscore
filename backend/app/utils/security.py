@@ -36,9 +36,9 @@ def _parse_expires_in(expires_in: str) -> timedelta:
     return timedelta(days=7)
 
 
-def create_access_token(data: dict[str, Any]) -> str:
+def create_access_token(data: dict[str, Any], expires_in: str | None = None) -> str:
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + _parse_expires_in(settings.jwt_expires_in)
+    expire = datetime.now(timezone.utc) + _parse_expires_in(expires_in or settings.jwt_expires_in)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.jwt_secret, algorithm=ALGORITHM)
 

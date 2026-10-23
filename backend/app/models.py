@@ -43,6 +43,23 @@ class User(Base):
 
     tenant = relationship("Tenant", back_populates="users")
     audit_logs = relationship("AuditLog", back_populates="user")
+    auth_tokens = relationship("AuthToken", back_populates="user")
+
+
+class AuthToken(Base):
+    """one-time server-side tokens: refresh sessions and password resets.
+    only the sha-256 hash is stored; rows are revoked on use/logout/reset."""
+    __tablename__ = "auth_tokens"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(Uuid(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    token_hash = Column(String, nullable=False, index=True)
+    purpose = Column(String, nullable=False)  # refresh | password_reset
+    expires_at = Column(DateTime, nullable=False)
+    revoked_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="auth_tokens")
 
 
 class Merchant(Base):
